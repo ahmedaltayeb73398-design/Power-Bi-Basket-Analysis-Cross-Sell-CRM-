@@ -1,0 +1,61 @@
+table products
+	lineageTag: dbca35a0-008d-40fa-ba5b-2667a3afb8d1
+
+	column Product_id
+		dataType: int64
+		formatString: 0
+		lineageTag: d7c98b82-7d21-4f35-84ba-69a201831455
+		summarizeBy: none
+		sourceColumn: Product_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column Product_name
+		dataType: string
+		lineageTag: ab6414a8-0a1e-49c1-84de-02281ce1ae39
+		summarizeBy: none
+		sourceColumn: Product_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column Category
+		dataType: string
+		lineageTag: 9ba6b269-e186-4137-8135-a92decaaa6d0
+		summarizeBy: none
+		sourceColumn: Category
+
+		annotation SummarizationSetBy = Automatic
+
+	column Price
+		dataType: decimal
+		formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+		lineageTag: 94d76d17-424c-41da-8322-b313fde4daf7
+		summarizeBy: none
+		sourceColumn: Price
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
+	partition products = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(File.Contents("C:\Power BI Projects\CRM\Basket Analysis\Source\Basket Analysis.xlsx"), null, true),
+				    products_Sheet = Source{[Item="products",Kind="Sheet"]}[Data],
+				    #"Promoted Headers" = Table.PromoteHeaders(products_Sheet, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"product_id", type any}, {"product_name", type text}, {"category", type text}, {"price", type any}}),
+				    #"Renamed Columns" = Table.RenameColumns(#"Changed Type",{{"product_id", "Product_id"}, {"product_name", "Product_name"}, {"category", "Category"}, {"price", "Price"}}),
+				    #"Replaced Value" = Table.ReplaceValue(#"Renamed Columns","product_id","",Replacer.ReplaceValue,{"Product_id"}),
+				    #"Replaced Value1" = Table.ReplaceValue(#"Replaced Value","product_name","",Replacer.ReplaceText,{"Product_name"}),
+				    #"Replaced Value2" = Table.ReplaceValue(#"Replaced Value1","category","",Replacer.ReplaceText,{"Category"}),
+				    #"Replaced Value3" = Table.ReplaceValue(#"Replaced Value2","price","",Replacer.ReplaceValue,{"Price"}),
+				    #"Removed Blank Rows" = Table.SelectRows(#"Replaced Value3", each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))),
+				    #"Changed Type1" = Table.TransformColumnTypes(#"Removed Blank Rows",{{"Product_id", Int64.Type}, {"Price", Currency.Type}})
+				in
+				    #"Changed Type1"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

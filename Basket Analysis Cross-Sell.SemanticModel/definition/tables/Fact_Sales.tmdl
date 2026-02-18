@@ -1,0 +1,83 @@
+table Fact_Sales
+	lineageTag: c86dee48-5f0c-4f69-ab01-45e310b8dace
+
+	column Sales_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 2c174016-40e6-49df-9947-01bcbf5246b3
+		summarizeBy: sum
+		sourceColumn: Sales_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column Customer_id
+		dataType: int64
+		formatString: 0
+		lineageTag: fde773b7-85c1-4942-82ad-a4dd023bc031
+		summarizeBy: none
+		sourceColumn: Customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column Product_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 6476a2e1-0d45-404f-a992-2a1971aadd7c
+		summarizeBy: none
+		sourceColumn: Product_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column Sales_date
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		lineageTag: 97fe92e8-7d85-4737-966c-dad7d64d3ea2
+		summarizeBy: none
+		sourceColumn: Sales_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation PBI_FormatHint = {"isDateTimeCustom":true}
+
+	column Quantity
+		dataType: int64
+		formatString: 0
+		lineageTag: ce170338-192d-469d-92d4-760ae48d6b6c
+		summarizeBy: sum
+		sourceColumn: Quantity
+
+		annotation SummarizationSetBy = Automatic
+
+	column Unit_Price
+		dataType: decimal
+		formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+		lineageTag: f7b36a40-599c-4593-a46a-91e0e2afe82d
+		summarizeBy: sum
+		sourceColumn: Unit_Price
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
+	partition Fact_Sales = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(File.Contents("C:\Power BI Projects\CRM\Basket Analysis\Source\Basket Analysis.xlsx"), null, true),
+				    Fact_Sales_Sheet = Source{[Item="Fact_Sales",Kind="Sheet"]}[Data],
+				    #"Promoted Headers" = Table.PromoteHeaders(Fact_Sales_Sheet, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"transaction_id", Int64.Type}, {"customer_id", Int64.Type}, {"product_id", Int64.Type}, {"transaction_date", type date}, {"quantity", Int64.Type}, {"total_amount", Int64.Type}}),
+				    #"Renamed Columns" = Table.RenameColumns(#"Changed Type",{{"transaction_id", "Sales_id"}, {"customer_id", "Customer_id"}, {"product_id", "Product_id"}, {"transaction_date", "Sales_date"}, {"quantity", "Quantity"}, {"total_amount", "Total_amount"}}),
+				    #"Merged Queries" = Table.NestedJoin(#"Renamed Columns", {"Product_id"}, products, {"Product_id"}, "products", JoinKind.LeftOuter),
+				    #"Expanded products" = Table.ExpandTableColumn(#"Merged Queries", "products", {"Price"}, {"products.Price"}),
+				    #"Renamed Columns1" = Table.RenameColumns(#"Expanded products",{{"products.Price", "Unit_Price"}}),
+				    #"Removed Columns" = Table.RemoveColumns(#"Renamed Columns1",{"Total_amount"})
+				in
+				    #"Removed Columns"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

@@ -1,0 +1,82 @@
+table '_Key Measures'
+	lineageTag: 07686400-ce0a-4cf6-b0da-17bfa2fa66b9
+
+	measure AOV =
+			
+			DIVIDE(
+			    [Revenue],[Total Transactions])
+		lineageTag: b2dae22c-834b-475e-9afd-9ba23e423d96
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'AOV Cross-Sell' =
+			
+			DIVIDE(
+			    CALCULATE([Revenue], Fact_Sales[Product_id] IN {4,5,6,9,11}),
+			    CALCULATE(DISTINCTCOUNT(Fact_Sales[Sales_id]), Fact_Sales[Product_id] IN {4,5,6,9,11})
+			)
+		formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+		lineageTag: 0c85b74b-0018-48d2-8e60-a2b602896d7f
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
+	measure 'Attach Rate' =
+			
+			DIVIDE([Complementary Purchase], [CoffeeMachineCustomers])
+		formatString: 0%;-0%;0%
+		lineageTag: 077514dc-cd82-4552-b9b1-8fa7790272ab
+
+	measure CoffeeMachineCustomers =
+			
+			CALCULATE(
+			    COUNTROWS(Fact_Sales),
+			    Fact_Sales[Product_id] IN {1,2,3})
+		formatString: 0
+		lineageTag: e58bc91c-aad9-4e83-b6b4-ec1f6e5efa3c
+
+	measure 'Complementary Purchase' =
+			
+			CALCULATE(
+			    DISTINCTCOUNT(Fact_Sales[Sales_id]),
+			    Fact_Sales[Product_id] IN {4, 5, 6, 9, 11}
+			)
+		formatString: 0
+		lineageTag: 7577b3c7-8c3b-4f40-a83e-65ecf325dd2d
+
+	measure Revenue =
+			
+			SUMX(Fact_Sales,Fact_Sales[Quantity] * Fact_Sales[Unit_Price])
+		formatString: 0.00
+		lineageTag: 77e6f653-5ab5-42ae-81f3-1a689a8e68b0
+
+	measure 'Products Sold' = ```
+			SUM(Fact_Sales[Quantity])
+			
+			```
+		formatString: 0
+		lineageTag: f25b15c3-4b3c-48a0-a22b-4294bcefeb0b
+
+	measure 'Total Transactions' =
+			
+			DISTINCTCOUNT(Fact_Sales[Sales_id])
+		formatString: 0
+		lineageTag: 7c936779-7dbe-4198-aeeb-8f5de8d46675
+
+	measure 'Unique Customers' =
+			
+			DISTINCTCOUNT(Fact_Sales[Customer_id])
+		formatString: 0
+		lineageTag: 536fd195-3538-4da4-a853-4eb5783109ce
+
+	partition '_Key Measures' = m
+		mode: import
+		source =
+				let
+				    Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i44FAA==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Column1 = _t]),
+				    #"Changed Type" = Table.TransformColumnTypes(Source,{{"Column1", type text}}),
+				    #"Removed Columns" = Table.RemoveColumns(#"Changed Type",{"Column1"})
+				in
+				    #"Removed Columns"
+
+	annotation PBI_ResultType = Table
+

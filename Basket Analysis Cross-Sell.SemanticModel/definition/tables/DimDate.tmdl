@@ -1,0 +1,61 @@
+table DimDate
+	lineageTag: 87acf394-3d0f-4a12-ae24-504cab607337
+
+	column FullDate
+		formatString: dd/mm/yyyy
+		lineageTag: 5ad8d238-cf49-40f8-9854-11efae51af24
+		summarizeBy: none
+		sourceColumn: [Date]
+
+		variation Variation
+			isDefault
+			relationship: 829815f9-70a5-4b26-9da2-01ca172625da
+			defaultHierarchy: LocalDateTable_0abe32cd-3b7e-46e4-baf9-b8c8c4b6d3eb.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation PBI_FormatHint = {"isDateTimeCustom":true}
+
+	column Year
+		formatString: 0
+		lineageTag: cac5f93d-c722-4e32-b5f5-28d0add91e7b
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Year]
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthNumber
+		formatString: 0
+		lineageTag: 0055c75e-6876-475c-8181-4026b356482c
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [MonthNumber]
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthName
+		lineageTag: 48ec366a-69b3-4964-b809-22d4dc3b146f
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [MonthName]
+		sortByColumn: MonthNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimDate = calculated
+		mode: import
+		source =
+				
+				VAR mycalnder = CALENDARAUTO()
+				RETURN
+				ADDCOLUMNS(
+				    mycalnder,
+				    "Year",YEAR([Date]),
+				    "MonthNumber",MONTH([Date]),
+				    "MonthName",FORMAT([Date],"MMM"))
+
+	annotation PBI_Id = 9682edac86f341008ea0bba828d579dd
+
