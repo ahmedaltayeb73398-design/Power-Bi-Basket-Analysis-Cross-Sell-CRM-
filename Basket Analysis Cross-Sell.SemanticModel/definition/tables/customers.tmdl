@@ -1,0 +1,50 @@
+table customers
+	lineageTag: 84201544-293a-48f6-bc64-9a5fee8f3848
+
+	column Customer_id
+		dataType: int64
+		formatString: 0
+		lineageTag: c83e01b8-a545-413a-9ba1-933c98c7c687
+		summarizeBy: none
+		sourceColumn: Customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column First_name
+		dataType: string
+		lineageTag: 01ad1fee-ecb6-4c2a-90b6-654562d355b8
+		summarizeBy: none
+		sourceColumn: First_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column Last_name
+		dataType: string
+		lineageTag: 299c7de1-934c-4241-a9b3-3406ea6a5835
+		summarizeBy: none
+		sourceColumn: Last_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column City
+		dataType: string
+		lineageTag: e6a4fc0c-de12-40f8-8fbf-6654c7d9e85d
+		summarizeBy: none
+		sourceColumn: City
+
+		annotation SummarizationSetBy = Automatic
+
+	partition customers = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(File.Contents("C:\Power BI Projects\CRM\Basket Analysis\Source\Basket Analysis.xlsx"), null, true),
+				    customers_Sheet = Source{[Item="customers",Kind="Sheet"]}[Data],
+				    #"Promoted Headers" = Table.PromoteHeaders(customers_Sheet, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"customer_id", Int64.Type}, {"first_name", type text}, {"last_name", type text}, {"city", type text}}),
+				    #"Renamed Columns" = Table.RenameColumns(#"Changed Type",{{"customer_id", "Customer_id"}, {"first_name", "First_name"}, {"last_name", "Last_name"}, {"city", "City"}})
+				in
+				    #"Renamed Columns"
+
+	annotation PBI_ResultType = Exception
+
